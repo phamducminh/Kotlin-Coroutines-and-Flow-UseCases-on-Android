@@ -33,7 +33,7 @@ class CooperativeCancellationViewModel(
             }
             var resultString = ""
             val stringConversionDuration = measureTimeMillis {
-                resultString = withContext(Dispatchers.Default + CoroutineName("String Conversion Coroutine")) {
+                resultString = withContext(defaultDispatcher + CoroutineName("String Conversion Coroutine")) {
                     result.toString()
                 }
             }
@@ -48,7 +48,7 @@ class CooperativeCancellationViewModel(
         }
     }
 
-    private suspend fun calculateFactorialOf(number: Int) = withContext(Dispatchers.Default) {
+    private suspend fun calculateFactorialOf(number: Int) = withContext(defaultDispatcher) {
         var factorial = BigInteger.ONE
         for (i in 1..number) {
             yield()
