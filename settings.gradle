@@ -1,2 +1,3 @@
 rootProject.name='Coroutine Usecases on Android'
 include ':app'
+include ':playground'
