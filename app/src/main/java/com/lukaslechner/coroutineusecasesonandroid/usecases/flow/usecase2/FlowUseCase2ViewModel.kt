@@ -1,14 +1,21 @@
 package com.lukaslechner.coroutineusecasesonandroid.usecases.flow.usecase2
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
 import com.lukaslechner.coroutineusecasesonandroid.base.BaseViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.withIndex
+import timber.log.Timber
 
 class FlowUseCase2ViewModel(
     stockPriceDataSource: StockPriceDataSource,
     defaultDispatcher: CoroutineDispatcher
 ) : BaseViewModel<UiState>() {
-
     /*
 
     Flow exercise 1 Goals
@@ -22,6 +29,48 @@ class FlowUseCase2ViewModel(
         8) Perform all flow processing on a background thread
 
      */
+    val currentStockPriceAsLiveData: LiveData<UiState> = stockPriceDataSource
+        .latestStockList
+        .withIndex()
+        .onEach { indexedValue ->
+            Timber.d("Processing emission ${indexedValue.index + 1}")
+        }
+        .map { indexedValue ->
+            indexedValue.value
+        }
+        .take(10)
+        .filter { stockList ->
+            val googlePrice = stockList.find { stock ->
+                stock.name == "Alphabet (Google)"
+            }?.currentPrice ?: return@filter false
 
-    val currentStockPriceAsLiveData: LiveData<UiState> = TODO()
+            googlePrice > 2300
+        }
+        .map { stockList ->
+            stockList.filter { stock ->
+                stock.country == "United States"
+            }
+        }
+        .map { stockList ->
+            stockList.filter { stock ->
+                stock.name != "Apple" && stock.name != "Microsoft"
+            }
+        }
+        .map { stockList ->
+            stockList.mapIndexed { index, stock ->
+                stock.copy(rank = index + 1)
+            }
+        }
+        .map { stockList ->
+            stockList.filter { stock ->
+                stock.rank <= 10
+            }
+        }
+        .map { stockList ->
+            UiState.Success(stockList) as UiState
+        }
+        .onStart {
+            emit(UiState.Loading)
+        }
+        .asLiveData(defaultDispatcher)
 }
